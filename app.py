@@ -1,7 +1,12 @@
 from PIL import Image
 from flask import Flask, request
 import io
-import urllib2 as urllib 
+import urllib2 as urllib2 
+import urllib 
+import random
+import string
+
+
 import json
 from PIL import Image
 import io
@@ -50,7 +55,7 @@ def getSize_old():
 
   #image_byt = urlopen(image_url)
 
-  img_file = urllib.urlopen(image_url)
+  img_file = urllib2.urlopen(image_url)
   im = StringIO(img_file.read())
   img = Image.open(im)
   #print(img.size)
@@ -62,16 +67,54 @@ def getSize_old():
  
   return "{}\n"
 
+def retrieveImageName(image_url):
+  filename = image_url.split('/')[-1].split('.')[0]
+  print("filename is: " + filename)
+  return filename
+
+def retrieveImageExtension(image_url):
+  file_ext = '.'+ image_url.split('.')[-1]
+  print("file_ext is: " + file_ext)
+  return file_ext
+
+def downloadImage(image_url):
+  imageName = retrieveImageName(image_url) + retrieveImageExtension(image_url)
+  urllib.urlretrieve(image_url, "/tmp/hifzaFlaskApp/" + retrieveImageName(image_url) + retrieveImageExtension(image_url))
+  return imageName
+
+def generateLyrics(imageName):
+  lyrics = []
+  for i in range(0,len(imageName)):
+    #lyrics.append(random.choice(string.ascii_letters[0:5]))
+    lyrics.append(''.join(random.sample(string.ascii_lowercase, 5)))
+  print("printing lyrics: ")  
+  print(lyrics) 
+  #for lyrics in lyrics:
+   # print("lyrics is: " + lyric)  
+  return lyrics
+
+
+
 @app.route('/facebook',methods=['POST'])
 def facebook():
   #url="localhost:5001/size"
   data = request.get_json()
-  #print whole json payloaf
+  #print whole json payload
   print(data)
   #pulls the URL out of the json payload
   image_url = data['entry'][0]['message']['attachments'][0]['payload']['url']
 
   print(image_url)
+
+
+  imageName = downloadImage(image_url)
+  #urllib.urlretrieve(image_url, "/tmp/hifzaFlaskApp/" + retrieveImageName(image_url) + retrieveImageExtension(image_url))
+
+  lyrics = generateLyrics(imageName)
+
+
+  return ("",200)
+
 
   #image_byt = urlopen(image_url)
 
@@ -85,7 +128,10 @@ def facebook():
   # print(height)
   # img.show()
  
-  return image_url
+  #return image_url
+
+
+  #return 200 OK
 
 @app.route('/sizer',methods=['POST'])
 def getSize():
