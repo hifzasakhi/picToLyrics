@@ -1,10 +1,13 @@
 from PIL import Image
 from flask import Flask, request
+from jinja2 import Template, Environment, PackageLoader, select_autoescape
 import io
 import urllib2 as urllib2 
 import urllib 
 import random
 import string
+import pymongo
+from pymongo import MongoClient
 
 
 import json
@@ -93,7 +96,53 @@ def generateLyrics(imageName):
    # print("lyrics is: " + lyric)  
   return lyrics
 
+#this string will serve as the key in the database
+def generateKeyString():
+  return ''.join(random.sample(string.ascii_lowercase, 10))
 
+def getDBConnection():
+  try:
+    client = MongoClient('localhost', 27017)
+    db = client.SongLyrics
+
+    return db
+  except Exception, e:
+    print str(e)
+
+def insertIntoDB(key_string, lyrics_array):
+  try:
+
+  #client = MongoClient('localhost', 27017)
+  #db = client.SongLyrics
+
+    db = getDBConnection()
+    db.SongLyrics.insert_one(
+      {
+        "key": key_string,
+        "lyrics": lyrics_array
+      })
+
+  except Exception, e:
+    print str(e)
+
+def fetchLyricsFromDB(key_string):
+
+  db = getDBConnection()
+  lyrics_db = db.SongLyrics.find()
+
+  lyrics_array = db.find({"key": key_string}, {"lyrics":1})
+
+  return lyrics_array
+
+def renderTemplate(lyrics):
+
+  env = Environment(
+    loader=PackageLoader('flaskapp', 'templates'),
+    autoescape=select_autoescape(['html', 'xml'])
+  )
+
+  template = Template('Hello {{ name }}!')
+  template.render(name='John Doe')
 
 @app.route('/facebook',methods=['POST'])
 def facebook():
@@ -112,6 +161,16 @@ def facebook():
 
   lyrics = generateLyrics(imageName)
 
+  key_string = generateKeyString()
+
+  db = getDBConnection()
+
+  insertIntoDB(key_string, lyrics)
+
+  print("Getting lyrics from db")
+  lyrics_array_from_db = fetchLyricsFromDB(key_string)
+  print("Lyrics from db are: ")
+  print(lyrics_array_from_db)
 
   return ("",200)
 
