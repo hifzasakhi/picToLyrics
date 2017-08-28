@@ -128,9 +128,9 @@ def insertIntoDB(key_string, lyrics_array):
 def fetchLyricsFromDB(key_string):
 
   db = getDBConnection()
-  lyrics_db = db.SongLyrics.find()
+  lyrics_db = db.SongLyrics
 
-  lyrics_array = db.find({"key": key_string}, {"lyrics":1})
+  lyrics_array = lyrics_db.find_one({"key": key_string}, {"lyrics":1})
 
   return lyrics_array
 
