@@ -118,7 +118,7 @@ def insertIntoDB(key_string, lyrics_array):
     print str(e)
 
 def fetchLyricsFromDB(key_string):
-  
+
   db = getDBConnection()
   lyrics_db = db.SongLyrics
 
@@ -127,14 +127,14 @@ def fetchLyricsFromDB(key_string):
 
   return lyrics_array
 
-@app.route('/temp',methods=['POST'])
+#@app.route('/temp',methods=['GET'])
 def renderTemplate(lyrics_array):
+  print("trying to render template")
+  return render_template("template.html",lyrics=lyrics_array)
 
-  return render_template("template.html", lyrics=lyrics_array)
-
-@app.route('/facebook',methods=['POST'])
+@app.route('/facebook',methods=['GET','POST'])
 def facebook():
-  #url="localhost:5001/size"
+
   data = request.get_json()
   #print whole json payload
   print(data)
@@ -159,7 +159,7 @@ def facebook():
   print("Lyrics from db are: ")
   print(lyrics_array_from_db)
 
-  renderTemplate(lyrics_array_from_db)
+  renderTemplate(lyrics)
 
   return ("",200)
 
@@ -188,4 +188,4 @@ def getSize():
 
 #
 if __name__ == "__main__":
-  app.run(port=8000)
+  app.run(port=8000,debug=True)
