@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	<title>Song Lyrics</title>
+	</head>
+
+	<body>
+		<h1>Here are your song lyrics!</h1>
+
+		<ul>
+	    {% for lyric in lyrics %}
+	        <li>{{ lyric }}</li>
+	    {% endfor %}
+	    </ul>
+	</body>
+</html>

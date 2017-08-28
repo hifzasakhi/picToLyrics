@@ -1,5 +1,5 @@
 from PIL import Image
-from flask import Flask, request
+from flask import Flask, request, render_template
 from jinja2 import Template, Environment, PackageLoader, select_autoescape
 import io
 import urllib2 as urllib2 
@@ -21,9 +21,6 @@ from cStringIO import StringIO
 
 app = Flask(__name__)
 
-@app.route("/")
-def hello():
-    return "Hello World!"
 
 @app.route("/hifza")
 def helloHifza():
@@ -88,12 +85,9 @@ def downloadImage(image_url):
 def generateLyrics(imageName):
   lyrics = []
   for i in range(0,len(imageName)):
-    #lyrics.append(random.choice(string.ascii_letters[0:5]))
     lyrics.append(''.join(random.sample(string.ascii_lowercase, 5)))
   print("printing lyrics: ")  
   print(lyrics) 
-  #for lyrics in lyrics:
-   # print("lyrics is: " + lyric)  
   return lyrics
 
 #this string will serve as the key in the database
@@ -102,18 +96,16 @@ def generateKeyString():
 
 def getDBConnection():
   try:
+
     client = MongoClient('localhost', 27017)
     db = client.SongLyrics
-
     return db
+
   except Exception, e:
     print str(e)
 
 def insertIntoDB(key_string, lyrics_array):
   try:
-
-  #client = MongoClient('localhost', 27017)
-  #db = client.SongLyrics
 
     db = getDBConnection()
     db.SongLyrics.insert_one(
@@ -126,23 +118,19 @@ def insertIntoDB(key_string, lyrics_array):
     print str(e)
 
 def fetchLyricsFromDB(key_string):
-
+  
   db = getDBConnection()
   lyrics_db = db.SongLyrics
 
+  #gets the lyrics associated with this particular key
   lyrics_array = lyrics_db.find_one({"key": key_string}, {"lyrics":1})
 
   return lyrics_array
 
-def renderTemplate(lyrics):
+@app.route('/temp',methods=['POST'])
+def renderTemplate(lyrics_array):
 
-  env = Environment(
-    loader=PackageLoader('flaskapp', 'templates'),
-    autoescape=select_autoescape(['html', 'xml'])
-  )
-
-  template = Template('Hello {{ name }}!')
-  template.render(name='John Doe')
+  return render_template("template.html", lyrics=lyrics_array)
 
 @app.route('/facebook',methods=['POST'])
 def facebook():
@@ -155,7 +143,6 @@ def facebook():
 
   print(image_url)
 
-
   imageName = downloadImage(image_url)
   #urllib.urlretrieve(image_url, "/tmp/hifzaFlaskApp/" + retrieveImageName(image_url) + retrieveImageExtension(image_url))
 
@@ -163,7 +150,7 @@ def facebook():
 
   key_string = generateKeyString()
 
-  db = getDBConnection()
+  #db = getDBConnection()
 
   insertIntoDB(key_string, lyrics)
 
@@ -171,6 +158,8 @@ def facebook():
   lyrics_array_from_db = fetchLyricsFromDB(key_string)
   print("Lyrics from db are: ")
   print(lyrics_array_from_db)
+
+  renderTemplate(lyrics_array_from_db)
 
   return ("",200)
 
