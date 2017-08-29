@@ -59,8 +59,6 @@ def getDBConnection():
 
 def insertIntoDB(key_string, lyrics_array):
   try:
-
-    db = getDBConnection()
     db.SongLyrics.insert_one(
       {
         "key": key_string,
@@ -71,17 +69,21 @@ def insertIntoDB(key_string, lyrics_array):
     print str(e)
 
 def fetchLyricsFromDB(key_string):
-
-  db = getDBConnection()
   lyrics_db = db.SongLyrics
 
-  #gets the lyrics associated with this particular key
+  #gets the dictionary associated with this particular key
   lyrics_array = lyrics_db.find_one({"key": key_string}, {"lyrics":1})
+  
+  #drill down into only the lyrics portion of the dictionary 
   return lyrics_array['lyrics']
 
 def renderTemplate(lyrics_array):
-  print("trying to render template")
+  print("Rendering lyrics template")
   return render_template("template.html",lyrics=lyrics_array)
+
+def renderErrorTemplate():
+  print("Rendering error template")
+  return render_template("error.html")
 
 @app.route('/facebook',methods=['POST'])
 def facebook():
@@ -101,7 +103,6 @@ def facebook():
   imageName = None
   if image_url != None:   
     imageName = downloadImage(image_url)
-  #urllib.urlretrieve(image_url, "/tmp/hifzaFlaskApp/" + retrieveImageName(image_url) + retrieveImageExtension(image_url))
 
   lyrics = None
   key_string = None
@@ -119,11 +120,14 @@ def facebook():
 def getPage(pageid=None):
   print("Getting lyrics from db")
   lyrics = fetchLyricsFromDB(pageid)
-  print("Lyrics from db are: ")
-  print(lyrics)
-  return renderTemplate(lyrics)
+
+  if lyrics != None: 
+    print("Lyrics from db are: ")
+    print(lyrics)
+    return renderTemplate(lyrics)
+  else:
+    return renderErrorTemplate()
 
 if __name__ == "__main__":
-  #db = mongo crap 
-
+  db = getDBConnection()
   app.run(port=8000,debug=True)
